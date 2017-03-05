@@ -98,25 +98,19 @@ class Schottky
 
 void Schottky::plot(void)
 {
-	std::cout << "Entered plot method. . . " << std::endl;
 	Colour colour;
 	SDL_SetRenderDrawColor(renderer,0,0,0,0);
-	std::cout << "Render draw colour set" << std::endl;
 	SDL_RenderClear(renderer);
-	std::cout << "RenderClear successful" << std::endl;
 	for(int i=0;i<pixWidth;i++)
 	{
 		for(int j=0;j<pixWidth;j++)
 		{
-			std::cout << "Processing pixel (" << i << "," << j <<")" << std::endl;
 			colour = getColour(calculate(pixToC(i,j)));
 			SDL_SetRenderDrawColor(renderer,colour.r,colour.g,colour.b,colour.a);
 			SDL_RenderDrawPoint(renderer,i,j);
 		}
 	}
-	std::cout << "Backbuffer filled, attempting put to screen. . ." << std::endl;
 	SDL_RenderPresent(renderer);
-	std::cout << "Changes put to screeen" << std::endl;
 }
 
 Colour Schottky::getColour(int n)
@@ -237,8 +231,7 @@ int main(void)
 	// Initialize SDL
 	if ( SDL_Init( SDL_INIT_EVERYTHING ) != 0 )
 	{
-		// Something failed, print error and exit.
-		std::cout << " Failed to initialize SDL : " << SDL_GetError() << std::endl;
+		std::cout << "Failed to initialise" << std::endl;
 		return -1;
 	}
 
@@ -248,7 +241,7 @@ int main(void)
 
 	if ( window == nullptr )
 	{
-		std::cout << "Failed to create window : " << SDL_GetError();
+		std::cout << "Failed to create window" << std::endl;
 		return -1;
 	}
 
@@ -257,26 +250,30 @@ int main(void)
 
 	if ( renderer == nullptr )
 	{
-		std::cout << "Failed to create renderer : " << SDL_GetError();
+		std::cout << "Failed to create renderer" << std::endl;
 		return -1;
 	}
 
 	// Set size of renderer to the same as window
 	SDL_RenderSetLogicalSize( renderer, pixWidth, pixHeight );
 	
-	
-	std::cout << "Renderer set up correctly" << std::endl;
-	Schottky group(0.7,0.5);
+	Schottky group(0.5,0.5);
 	group.setPixWidth(pixWidth);
 	group.setPixHeight(pixHeight);
 	group.setWidth(4.0);
 	group.setHeight(4.0);
 	group.setThreshold(20);
-	std::cout << "Group initialised" << std::endl;
 	group.setRenderer(renderer);
-	std::cout << "Group renderer set" << std::endl;
-	group.plot();
-	std::cout << "Plot method complete, now delaying" << std::endl;
-	SDL_Delay(5000);
+	
+	int frames = 50;
+	clock_t t = clock();
+	for(int i = 1; i <= frames ; i++)
+	{
+		group.setv(0.5 + (double)i/100.0);
+		group.plot();
+	}
+	t = clock() - t;
+	double time = (double)t/CLOCKS_PER_SEC;
+	std::cout << frames << " frames plotted in " << time << " s, " << (double)frames / time << "fps average" << std::endl;
 	return 0;
 }
