@@ -42,7 +42,7 @@ Matrix Matrix::inv(void)
 	result.d = a;
 	result.b = -1.0 * c;
 	result.c = -1.0 * b;
-	result.scale(this->det());
+	result.scale(1.0/this->det());
 	return result;
 }
 
@@ -74,14 +74,38 @@ class Schottky
 		int pixWidth;
 		int pixHeight;
 		
+		int threshold;
+		
 		Matrix gens[4];
 		
 		void updateParams(void);	//Updates all parameters of the group
 		
-		int calculate(void);	//Returns the number of iterations to get to the fundamental domain
+		int calculate(std::complex<double> z);	//Returns the number of iterations to get z into the fundamental domain
 		std::complex<double> pixToC(int i,int j);
 		
 };
+
+int Schottky::calculate(std::complex<double> z)
+{
+	int count;
+	bool acted;
+	for(count = 0; count < threshold; count++)
+	{
+		acted = false;
+		for(int l=0;l<4;l++)
+		{
+			if(circl[l].encircles(z))
+			{
+				z = gens[(l+2)%4] * z;
+				acted = 1;
+				break;
+			}
+		}
+		if(!acted)
+			break;
+		//TODO: Finish this method
+	}
+}
 
 void Schottky::Schottky(double k,double v)
 {
