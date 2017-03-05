@@ -220,10 +220,16 @@ void Schottky::updateParams(void)
 
 
 
-int main(void)
+int main(int argc,char *argv[])
 {
-	int pixWidth = 400;
-	int pixHeight = 400;
+	if(argc!=2)
+	{
+		std::cout << "Usage: " << argv[0] << " <pixel width>" << std::endl;
+		return -1;
+	}
+	
+	int pixWidth = std::stoi(argv[1]);
+	int pixHeight = pixWidth;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	
@@ -274,6 +280,7 @@ int main(void)
 	}
 	t = clock() - t;
 	double time = (double)t/CLOCKS_PER_SEC;
-	std::cout << frames << " frames plotted in " << time << " s, " << (double)frames / time << "fps average" << std::endl;
+	//std::cout << frames << " frames plotted in " << time << " s, " << (double)frames / time << "fps average" << std::endl;
+	std::cout << pixWidth << " " << time << std::endl;
 	return 0;
 }
