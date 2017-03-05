@@ -1,6 +1,6 @@
 #include <iostream>
 #include <complex>
-#include <SDL/SDL2.h>
+#include <SDL2/SDL.h>
 #include <cmath>
 
 struct Colour
@@ -15,7 +15,7 @@ struct Circle
 {
 	std::complex<double> centre;
 	double squaredRadius;
-	bool encircles(std::complex<double> z){return std::norm(z-centre) <= squaredRadius;};
+	bool encircles(const std::complex<double> &z){return std::norm(z-centre) <= squaredRadius;};
 };
 
 struct Matrix
@@ -30,6 +30,8 @@ struct Matrix
 	void setc(std::complex<double> c){this->c = c;};
 	void setd(std::complex<double> d){this->d = d;};
 	
+	friend std::complex<double> operator*(const Matrix &M,const std::complex<double> &z){return (M.a*z + M.b)/(M.c*z + M.d);};	//Mobius map
+	
 	void scale(std::complex<double> k);	//Scales the matrix by a factor of k
 	std::complex<double> det(void){return a*d-b*c;};
 	Matrix inv(void);
@@ -40,8 +42,8 @@ Matrix Matrix::inv(void)
 	Matrix result;
 	result.a = d;
 	result.d = a;
-	result.b = -1.0 * c;
-	result.c = -1.0 * b;
+	result.b = -1.0 * b;
+	result.c = -1.0 * c;
 	result.scale(1.0/this->det());
 	return result;
 }
@@ -61,9 +63,18 @@ class Schottky
 		Schottky(double k,double v);
 		void setk(double k);
 		void setv(double v);
+		void setPixWidth(int pixWidth){this->pixWidth=pixWidth;};
+		void setPixHeight(int pixHeight){this->pixHeight=pixHeight;};
+		void setWidth(int width){this->width=width;};
+		void setHeight(int height){this->height=height;};
+		void setThreshold(int threshold){this->threshold=threshold;};
+		void setRenderer(SDL_Renderer *renderer){this->renderer=renderer;};
 		void plot(void);	//Plots the current limit set, with Schottky circles, to the screen
 	private:
-		double k;
+		Matrix gens[4];		//Generators of the group
+		Circle circ[4];		//Circles of the group
+		
+		double k;		//Parameters of the group, see Indra's Pearls
 		double v;
 		double u;
 		double x;
@@ -74,46 +85,118 @@ class Schottky
 		int pixWidth;
 		int pixHeight;
 		
-		int threshold;
+		int threshold;		//Maximum number of iterations before we decide we're close enough to the limit set
 		
-		Matrix gens[4];
+		SDL_Renderer *renderer;	//Renderer with which to plot things
 		
 		void updateParams(void);	//Updates all parameters of the group
 		
-		int calculate(std::complex<double> z);	//Returns the number of iterations to get z into the fundamental domain
-		std::complex<double> pixToC(int i,int j);
-		
+		Colour getColour(int n);			//Takes number of iterations required to reach the fundamental domain, returns corresponding colour
+		int calculate(std::complex<double> z);		//Returns the number of iterations to get z into the fundamental domain
+		std::complex<double> pixToC(int i,int j);	//Changes pixel (i,j) into the corresponding value in the complex plane
 };
+
+void Schottky::plot(void)
+{
+	std::cout << "Entered plot method. . . " << std::endl;
+	Colour colour;
+	SDL_SetRenderDrawColor(renderer,0,0,0,0);
+	std::cout << "Render draw colour set" << std::endl;
+	SDL_RenderClear(renderer);
+	std::cout << "RenderClear successful" << std::endl;
+	for(int i=0;i<pixWidth;i++)
+	{
+		for(int j=0;j<pixWidth;j++)
+		{
+			std::cout << "Processing pixel (" << i << "," << j <<")" << std::endl;
+			colour = getColour(calculate(pixToC(i,j)));
+			SDL_SetRenderDrawColor(renderer,colour.r,colour.g,colour.b,colour.a);
+			SDL_RenderDrawPoint(renderer,i,j);
+		}
+	}
+	std::cout << "Backbuffer filled, attempting put to screen. . ." << std::endl;
+	SDL_RenderPresent(renderer);
+	std::cout << "Changes put to screeen" << std::endl;
+}
+
+Colour Schottky::getColour(int n)
+{
+	Colour pixColour;
+	pixColour.a = 255;	//Full opacity for all colours (for now)
+	if(n == threshold)	//We were sufficiently close enough to the limit set
+	{
+		pixColour.r = 255;
+		pixColour.g = 255;
+		pixColour.b = 255;
+	}
+	else
+	{
+		double ratio = 3.0*fmod(5.0 * (double)n/(double)threshold,1.0);       /*Google colour circle or colour pick page 200 Indra's pearls*/
+		if(ratio <= 1.0)
+		{
+			pixColour.r = 0;
+			pixColour.g = 255*ratio;
+			pixColour.b = 255*(1.0-ratio);
+		}
+		else if(ratio <= 2.0)
+		{
+			ratio -= 1.0;
+			pixColour.r = 255*ratio;
+			pixColour.g = 255*(1.0-ratio);
+			pixColour.b = 0;
+		}
+		else
+		{
+			ratio -= 2.0;
+			pixColour.r = 255*(1.0-ratio);
+			pixColour.g = 0;
+			pixColour.b = 255*ratio;
+		}
+	}
+	return pixColour;
+}
+
+std::complex<double> Schottky::pixToC(int i,int j)
+{
+	double ratio = width/(double)pixWidth;
+	return std::complex<double>(i*ratio - width/2.0,width/2.0 - j * ratio);	//This is supposed to be fast, not readable
+}
 
 int Schottky::calculate(std::complex<double> z)
 {
-	int count;
 	bool acted;
-	for(count = 0; count < threshold; count++)
+	for(int count = 0; count < threshold; count++)
 	{
 		acted = false;
 		for(int l=0;l<4;l++)
 		{
-			if(circl[l].encircles(z))
+			if(circ[l].encircles(z))
 			{
-				z = gens[(l+2)%4] * z;
-				acted = 1;
+				z = gens[(l+2)%4] * z;	//Try to move it out of circle l
+				acted = true;
 				break;
 			}
 		}
 		if(!acted)
-			break;
-		//TODO: Finish this method
+			return count;
 	}
+	//If we got here then we must have exceeded threshold
+	return threshold;
 }
 
-void Schottky::Schottky(double k,double v)
+Schottky::Schottky(double k,double v)
 {
 	this->k=k;
 	setv(v);	//Makes sure that updateParams() is called
 }
 
-void schottky::updateParams(void)
+void Schottky::setv(double v)
+{
+	this->v=v;
+	updateParams();
+}
+
+void Schottky::updateParams(void)
 {
 	u = sqrt(1.0 + v*v);
 	y = 2.0 / (v*(k+1.0/k));
@@ -145,5 +228,55 @@ void schottky::updateParams(void)
 
 int main(void)
 {
+	int pixWidth = 400;
+	int pixHeight = 400;
+	SDL_Window* window;
+	SDL_Renderer* renderer;
+	
+
+	// Initialize SDL
+	if ( SDL_Init( SDL_INIT_EVERYTHING ) != 0 )
+	{
+		// Something failed, print error and exit.
+		std::cout << " Failed to initialize SDL : " << SDL_GetError() << std::endl;
+		return -1;
+	}
+
+	// Create and init the window
+	
+	window = SDL_CreateWindow( "Kissing Schottky group plotter", SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED, pixWidth, pixHeight, 0 );
+
+	if ( window == nullptr )
+	{
+		std::cout << "Failed to create window : " << SDL_GetError();
+		return -1;
+	}
+
+	// Create and init the renderer
+	renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED );
+
+	if ( renderer == nullptr )
+	{
+		std::cout << "Failed to create renderer : " << SDL_GetError();
+		return -1;
+	}
+
+	// Set size of renderer to the same as window
+	SDL_RenderSetLogicalSize( renderer, pixWidth, pixHeight );
+	
+	
+	std::cout << "Renderer set up correctly" << std::endl;
+	Schottky group(0.7,0.5);
+	group.setPixWidth(pixWidth);
+	group.setPixHeight(pixHeight);
+	group.setWidth(4.0);
+	group.setHeight(4.0);
+	group.setThreshold(20);
+	std::cout << "Group initialised" << std::endl;
+	group.setRenderer(renderer);
+	std::cout << "Group renderer set" << std::endl;
+	group.plot();
+	std::cout << "Plot method complete, now delaying" << std::endl;
+	SDL_Delay(5000);
 	return 0;
 }
