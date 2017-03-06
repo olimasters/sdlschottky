@@ -166,7 +166,7 @@ int Schottky::calculate(std::complex<double> z)
 		{
 			if(circ[l].encircles(z))
 			{
-				z = gens[(l+2)%4] * z;	//Try to move it out of circle l
+				z = gens[(l+2)%4] * z;	//Try to move it out of circle l.  gens[(l+2)%4] is the inverse of gens[l]
 				acted = true;
 				break;
 			}
