@@ -60,7 +60,9 @@ class Schottky
 {
 	public:
 		
-		Schottky(double k,double v);
+		Schottky(double k,double v);	//Constructor
+		void plot(void);	//Plots the current limit set, with Schottky circles, to the screen
+		//Setters
 		void setk(double k);
 		void setv(double v);
 		void setPixWidth(int pixWidth){this->pixWidth=pixWidth;};
@@ -69,7 +71,7 @@ class Schottky
 		void setHeight(int height){this->height=height;};
 		void setThreshold(int threshold){this->threshold=threshold;};
 		void setRenderer(SDL_Renderer *renderer){this->renderer=renderer;};
-		void plot(void);	//Plots the current limit set, with Schottky circles, to the screen
+		
 	private:
 		Matrix gens[4];		//Generators of the group
 		Circle circ[4];		//Circles of the group
@@ -268,7 +270,7 @@ int main(int argc,char *argv[])
 	group.setPixHeight(pixHeight);
 	group.setWidth(4.0);
 	group.setHeight(4.0);
-	group.setThreshold(20);
+	group.setThreshold(15);
 	group.setRenderer(renderer);
 	
 	int frames = 50;
