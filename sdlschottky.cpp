@@ -270,7 +270,7 @@ int main(int argc,char *argv[])
 	group.setPixHeight(pixHeight);
 	group.setWidth(4.0);
 	group.setHeight(4.0);
-	group.setThreshold(15);
+	group.setThreshold(20);
 	group.setRenderer(renderer);
 	
 	int frames = 50;
