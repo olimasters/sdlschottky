@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <complex>
 #include <SDL2/SDL.h>
 #include <cmath>
@@ -274,15 +275,14 @@ int main(int argc,char *argv[])
 	group.setRenderer(renderer);
 	
 	int frames = 50;
-	clock_t t = clock();
+	auto t = std::chrono::high_resolution_clock::now();
 	for(int i = 1; i <= frames ; i++)
 	{
 		group.setv(0.5 + (double)i/100.0);
 		group.plot();
 	}
-	t = clock() - t;
-	double time = (double)t/CLOCKS_PER_SEC;
+	std::chrono::duration<double> diff = std::chrono::high_resolution_clock::now() - t;
 	//std::cout << frames << " frames plotted in " << time << " s, " << (double)frames / time << "fps average" << std::endl;
-	std::cout << pixWidth << " " << time << std::endl;
+	std::cout << pixWidth << " " << diff.count() << std::endl;
 	return 0;
 }
