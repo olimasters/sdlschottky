@@ -31,6 +31,7 @@ struct Matrix
 	void setc(std::complex<double> c){this->c = c;};
 	void setd(std::complex<double> d){this->d = d;};
 	
+	
 	friend std::complex<double> operator*(const Matrix &M,const std::complex<double> &z){return (M.a*z + M.b)/(M.c*z + M.d);};	//Mobius map
 	
 	void scale(std::complex<double> k);	//Scales the matrix by a factor of k
@@ -106,7 +107,7 @@ void Schottky::plot(void)
 	SDL_RenderClear(renderer);
 	for(int i=0;i<pixWidth;i++)
 	{
-		for(int j=0;j<pixWidth;j++)
+		for(int j=0;j<pixHeight;j++)
 		{
 			colour = getColour(calculate(pixToC(i,j)));
 			SDL_SetRenderDrawColor(renderer,colour.r,colour.g,colour.b,colour.a);
