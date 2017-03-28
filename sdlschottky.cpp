@@ -6,10 +6,10 @@
 
 struct Colour
 {
-	double r;
-	double g;
-	double b;
-	double a;
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
+	unsigned char a;
 };
 
 struct Circle
@@ -62,8 +62,9 @@ class Schottky
 {
 	public:
 		
-		Schottky(double k,double v);	//Constructor
+		Schottky(double k,double v,int pixWidth,int pixHeight);	//Constructor
 		void plot(void);	//Plots the current limit set, with Schottky circles, to the screen
+		void setPix(int i,int j,Colour colour);
 		//Setters
 		void setk(double k);
 		void setv(double v);
@@ -73,6 +74,8 @@ class Schottky
 		void setHeight(int height){this->height=height;};
 		void setThreshold(int threshold){this->threshold=threshold;};
 		void setRenderer(SDL_Renderer *renderer){this->renderer=renderer;};
+                void setTexture(SDL_Texture *texture){this->texture=texture;};
+
 		
 	private:
 		Matrix gens[4];		//Generators of the group
@@ -92,6 +95,9 @@ class Schottky
 		int threshold;		//Maximum number of iterations before we decide we're close enough to the limit set
 		
 		SDL_Renderer *renderer;	//Renderer with which to plot things
+		SDL_Texture *texture;	//Similar to above
+		
+		unsigned int *pixels;	//Raw pixel data, encoded in an int array
 		
 		void updateParams(void);	//Updates all parameters of the group
 		
@@ -100,20 +106,26 @@ class Schottky
 		std::complex<double> pixToC(int i,int j);	//Changes pixel (i,j) into the corresponding value in the complex plane
 };
 
+void Schottky::setPix(int i,int j,Colour colour)
+{
+	//TODO: throw exception if we try to set a pixel which is out of range
+	pixels[i + j*pixWidth] = (colour.a << 24) + (colour.r << 16) + (colour.g << 8) + colour.b;	//SDL stashes a,r,g,b into a 32 bit unsigned int
+}
+
 void Schottky::plot(void)
 {
 	Colour colour;
-	SDL_SetRenderDrawColor(renderer,0,0,0,0);
-	SDL_RenderClear(renderer);
 	for(int i=0;i<pixWidth;i++)
 	{
 		for(int j=0;j<pixHeight;j++)
 		{
 			colour = getColour(calculate(pixToC(i,j)));
-			SDL_SetRenderDrawColor(renderer,colour.r,colour.g,colour.b,colour.a);
-			SDL_RenderDrawPoint(renderer,i,j);
+			setPix(i,j,colour);
 		}
 	}
+	SDL_UpdateTexture(texture,NULL,pixels,pixWidth*sizeof(pixels[0])); //TODO: Apparently this is a fairly slow function with faster alternatives
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer,texture,NULL,NULL);
 	SDL_RenderPresent(renderer);
 }
 
@@ -182,9 +194,12 @@ int Schottky::calculate(std::complex<double> z)
 	return threshold;
 }
 
-Schottky::Schottky(double k,double v)
+Schottky::Schottky(double k,double v,int pixWidth,int pixHeight)
 {
 	this->k=k;
+	this->pixWidth = pixWidth;
+	this->pixHeight = pixHeight;
+	pixels = new unsigned int[pixWidth*pixHeight];
 	setv(v);	//Makes sure that updateParams() is called
 }
 
@@ -246,7 +261,7 @@ int main(int argc,char *argv[])
 	}
 
 	// Create and init the window
-	
+
 	window = SDL_CreateWindow( "Kissing Schottky group plotter", SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED, pixWidth, pixHeight, 0 );
 
 	if ( window == nullptr )
@@ -266,14 +281,15 @@ int main(int argc,char *argv[])
 
 	// Set size of renderer to the same as window
 	SDL_RenderSetLogicalSize( renderer, pixWidth, pixHeight );
+	SDL_Texture *texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STREAMING,pixWidth,pixHeight);
+
 	
-	Schottky group(0.5,0.5);
-	group.setPixWidth(pixWidth);
-	group.setPixHeight(pixHeight);
+	Schottky group(0.5,0.5,pixWidth,pixHeight);
 	group.setWidth(4.0);
 	group.setHeight(4.0);
 	group.setThreshold(20);
 	group.setRenderer(renderer);
+	group.setTexture(texture);
 	
 	int frames = 50;
 	auto t = std::chrono::high_resolution_clock::now();

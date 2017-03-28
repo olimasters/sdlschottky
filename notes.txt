@@ -1,0 +1,34 @@
+Things to do:
+
+SDL bad framerate - what is wrong?  
+	Overhead per frame?  
+Do a clock-based 'time map' of the pixels, see what's going on - which ones are expensive, should be VERY spiky around the limit set.  If not, why not?  
+Work in parallel on the UI
+OPTi allows user to specify fineness
+	Email the creator, Wada, something along the lines of 'how so fast?' 
+
+__________________________________________________________________________________
+
+Report/notes/questions:
+
+Have tried cutting out graphics library - does not seem to provide a reasonable sized performance improvement (appears approximately constant and small compared to calculation time)
+	Still too big but not where the main 'issue' is clearly
+Have done time plot - amazingly similar, reassuring but not (WHERE IS THE SLOWDOWN?!)
+Found OPTi's source code from 1996 (same age as me!) - couldn't understand it much but re-stumbled upon http://delta-mat.ist.osaka-u.ac.jp/OPTi/opti_limit_set020604.pdf.  This seems to suggest that OPTi doesn't use a pixel algorithm, so the speed of OPTi should not reassure as that a pixel algorithm will be fast enough.  
+:(
+	Is it worth resigning to no pixel algorithm if using fancy orbifold groups can end up faster in the first place?  
+Have seemingly sorted out the graphics issues!  Was talking to the graphics library way too much - was better to store a big array of pixels then throw them over in one go instead of using its 'DrawPoint()' function
+
+Google how to do arithmetic quickly
+
+Idea: are we being killed by the quadratic or not?  
+
+Re-test black white black white black white with proper usage of the graphics library
+
+Do previous tests with graphics done properly/cut out
+
+__________________________________________________________________________________
+
+Scaling is quadratic even when cutting out the graphics library or using it properly.  
+	- This should be the case with a pixel algorithm for any finite threshold: let F be the fundamental domain.  Let g_1,...,g_k \in G.  Then \dim( \cup_{i=1}^k g_i F ) = 2, no matter how large k is.  
+
