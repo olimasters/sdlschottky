@@ -34,3 +34,15 @@ Scaling is quadratic even when cutting out the graphics library or using it prop
 
 UI looks like it's lagging slightly behind the mouse - would be solved by making it faster, but perhaps just skipping intermediate frames and polling mouse location would be better than polling mouse movement events?  
 
+Different window for parameter space
+
+Throw away everything except the bottom of the queue
+
+Make the big boss know about pixels and a lowly group theory servant who knows only \mathbb{C}
+
+Understand what is the family of groups 
+	Draw the unit circle
+
+Make a separate parameter window, put the dot on it etc
+
+Does the tangency point determine everything?  Consider using the centres of circles as parameters too

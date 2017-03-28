@@ -76,6 +76,10 @@ class Schottky
 		void setRenderer(SDL_Renderer *renderer){this->renderer=renderer;};
                 void setTexture(SDL_Texture *texture){this->texture=texture;};
 
+		std::complex<double> pixToC(int i,int j);	//Changes pixel (i,j) into the corresponding value in the complex plane
+		//TODO: Write a CToPix function
+		
+		void gaussUnits(void);
 		
 	private:
 		Matrix gens[4];		//Generators of the group
@@ -103,8 +107,16 @@ class Schottky
 		
 		Colour getColour(int n);			//Takes number of iterations required to reach the fundamental domain, returns corresponding colour
 		int calculate(std::complex<double> z);		//Returns the number of iterations to get z into the fundamental domain
-		std::complex<double> pixToC(int i,int j);	//Changes pixel (i,j) into the corresponding value in the complex plane
 };
+
+void gaussUnits(void)
+{
+	Colour black;
+	black.a=255;
+	black.r=0;
+	black.g=0;
+	black.b=0;
+}
 
 void Schottky::setPix(int i,int j,Colour colour)
 {
@@ -293,21 +305,43 @@ int main(int argc,char *argv[])
 	Schottky group(0.5,0.5,pixWidth,pixHeight);
 	group.setWidth(4.0);
 	group.setHeight(4.0);
-	group.setThreshold(20);
+	group.setThreshold(25);
 	group.setRenderer(renderer);
 	group.setTexture(texture);
+	group.plot();
 	
-	int frames = 49;
+	//Begin dealing with the events
+	bool quitting = false;
+	std::complex<double> params;
+	SDL_Event event;
+	while(!quitting)
+	{
+		while(SDL_PollEvent(&event))		//Emptying the queue of all of its non-quitting events
+			if(event.type == SDL_QUIT)
+				break;
+		
+		switch(event.type)
+		{
+			case SDL_QUIT:
+				quitting = true;
+				break;
+			case SDL_MOUSEMOTION:
+				params = group.pixToC(event.motion.x,event.motion.y);
+				group.setv(params.imag());
+				group.setk(params.real());
+				group.plot();
+				break;
+		}
+	}
+	/*
+	int frames = 50;
 	auto t = std::chrono::high_resolution_clock::now();
 	for(int i = 1; i <= frames ; i++)
 	{
-		group.setv(0.5 - (double)i/100.0);
-		group.setk(0.5 - (double)i/100.0);
+		group.setv(0.5 + (double)i/100.0);
 		group.plot();
 	}
-	SDL_Delay(10000);
 	std::chrono::duration<double> diff = std::chrono::high_resolution_clock::now() - t;
-	//std::cout << frames << " frames plotted in " << time << " s, " << (double)frames / time << "fps average" << std::endl;
-	std::cout << pixWidth << " " << diff.count() << std::endl;
+	std::cout << pixWidth << " " << diff.count() << std::endl;*/
 	return 0;
 }
