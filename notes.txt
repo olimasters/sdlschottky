@@ -32,3 +32,5 @@ ________________________________________________________________________________
 Scaling is quadratic even when cutting out the graphics library or using it properly.  
 	- This should be the case with a pixel algorithm for any finite threshold: let F be the fundamental domain.  Let g_1,...,g_k \in G.  Then \dim( \cup_{i=1}^k g_i F ) = 2, no matter how large k is.  
 
+UI looks like it's lagging slightly behind the mouse - would be solved by making it faster, but perhaps just skipping intermediate frames and polling mouse location would be better than polling mouse movement events?  
+
