@@ -59,7 +59,7 @@ void Matrix::scale(std::complex<double> k)
 }
 
 class Schottky
-{
+{	//TODO: Change this into two classes by making the group theory more self-contained
 	public:
 		
 		Schottky(double k,double v,int pixWidth,int pixHeight);	//Constructor
@@ -101,7 +101,7 @@ class Schottky
 		SDL_Renderer *renderer;	//Renderer with which to plot things
 		SDL_Texture *texture;	//Similar to above
 		
-		unsigned int *pixels;	//Raw pixel data, encoded in an int array
+		unsigned int *pixels;	//Raw pixel data, encoded in an unsigned int array
 		
 		void updateParams(void);	//Updates all parameters of the group
 		
@@ -121,7 +121,7 @@ void gaussUnits(void)
 void Schottky::setPix(int i,int j,Colour colour)
 {
 	//TODO: throw exception if we try to set a pixel which is out of range
-	pixels[i + j*pixWidth] = (colour.a << 24) + (colour.r << 16) + (colour.g << 8) + colour.b;	//SDL stashes a,r,g,b into a 32 bit unsigned int
+	pixels[i + j*pixWidth] = (colour.a << 24) | (colour.r << 16) | (colour.g << 8) | colour.b;	//SDL stashes a,r,g,b into a 32 bit unsigned int
 }
 
 void Schottky::plot(void)
@@ -305,16 +305,15 @@ int main(int argc,char *argv[])
 	Schottky group(0.5,0.5,pixWidth,pixHeight);
 	group.setWidth(4.0);
 	group.setHeight(4.0);
-	group.setThreshold(25);
+	group.setThreshold(30);
 	group.setRenderer(renderer);
 	group.setTexture(texture);
 	group.plot();
 	
 	//Begin dealing with the events
-	bool quitting = false;
 	std::complex<double> params;
 	SDL_Event event;
-	while(!quitting)
+	for(bool quitting = false; !quitting;)
 	{
 		while(SDL_PollEvent(&event))		//Emptying the queue of all of its non-quitting events
 			if(event.type == SDL_QUIT)
