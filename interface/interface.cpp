@@ -227,7 +227,11 @@ Schottky::Schottky(double k,double v,int pixWidth,int pixHeight)
 	this->k=k;
 	this->pixWidth = pixWidth;
 	this->pixHeight = pixHeight;
+	
 	cpus = std::thread::hardware_concurrency();
+	if(cpus == 0)		//Standard says that std::thread::hardware_concurrency() returns 0 if information isn't known
+		cpus = 1;
+	
 	pixels = new unsigned int[pixWidth*pixHeight];
 	setv(v);	//Makes sure that updateParams() is called
 }
