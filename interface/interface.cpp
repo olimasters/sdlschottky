@@ -122,9 +122,11 @@ void Schottky::plot(void)
 	std::vector<std::thread> threads;
 	threads.reserve(cpus);
 	
-	//Update a strip of pixels for each logical core the machine has
-	for(int i=0;i<cpus;i++)
+	//Update a strip of pixels for each logical core the machine has (minus one, since we do one in main())
+	for(int i=1;i<cpus;i++)
 		threads.push_back(std::thread(&Schottky::updatePixStrip,this,i * pixWidth / cpus,(i+1)*pixWidth/cpus));
+	
+	updatePixStrip(0,pixWidth/cpus);	//Making use of the main() thread
 	
 	//Wait until they're all finished
 	while(!threads.empty())
