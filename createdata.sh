@@ -2,5 +2,5 @@
 
 for x in {10..500..10}
 	do
-		./standard $x >> $1
+		./$1 $x >> $2
 	done
