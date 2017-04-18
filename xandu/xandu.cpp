@@ -68,8 +68,8 @@ class Schottky
 		void plot(void);	//Plots the current limit set, with Schottky circles, to the screen
 		void setPix(int i,int j,Colour colour);
 		//Setters
-		void setk(double k);
-		void setv(double v);
+		void setu(double u);
+		void setx(double x);
 		void setPixWidth(int pixWidth){this->pixWidth=pixWidth;};
 		void setPixHeight(int pixHeight){this->pixHeight=pixHeight;};
 		void setWidth(int width){this->width=width;};
@@ -220,33 +220,35 @@ int Schottky::calculate(std::complex<double> z)
 	return threshold;
 }
 
-Schottky::Schottky(double k,double v,int pixWidth,int pixHeight)
+Schottky::Schottky(double x,double u,int pixWidth,int pixHeight)
 {
-	this->k=k;
+	this->u=u;
 	this->pixWidth = pixWidth;
 	this->pixHeight = pixHeight;
 	cpus = std::thread::hardware_concurrency();
 	pixels = new unsigned int[pixWidth*pixHeight];
-	setv(v);	//Makes sure that updateParams() is called
+	setx(x);	//Makes sure that updateParams() is called
 }
 
-void Schottky::setv(double v)
+void Schottky::setx(double x)
 {
-	this->v=v;
+	this->x=x;
 	updateParams();
 }
 
-void Schottky::setk(double k)
+void Schottky::setu(double u)
 {
-	this->k=k;
+	this->u=u;
 	updateParams();
 }
 
 void Schottky::updateParams(void)
 {
-	u = sqrt(1.0 + v*v);
-	y = 2.0 / (v*(k+1.0/k));
-	x = sqrt(1.0 + y*y);
+	//Current mode: expecting x and/or u to be changed, none of the others
+	y = sqrt(x*x - 1.0);
+	v = sqrt(u*u - 1.0);
+	k = (2.0/(y*v) + sqrt((4.0/(y*y*v*v)) - 4.0))/2.0;	//Quadratic formula
+								//TODO: Complex roots?
 
 	gens[0].a = u;
 	gens[0].b = std::complex<double>(0,k*v);
@@ -318,8 +320,8 @@ int main(int argc,char *argv[])
 
 	
 	Schottky group(0.5,0.5,pixWidth,pixHeight);
-	group.setWidth(4.0);
-	group.setHeight(4.0);
+	group.setWidth(8.0);
+	group.setHeight(8.0);
 	group.setThreshold(30);
 	group.setRenderer(renderer);
 	group.setTexture(texture);
@@ -341,8 +343,8 @@ int main(int argc,char *argv[])
 				break;
 			case SDL_MOUSEMOTION:
 				params = group.pixToC(event.motion.x,event.motion.y);
-				group.setv(params.imag());
-				group.setk(params.real());
+				group.setx(params.imag());
+				group.setu(params.real());
 				group.plot();
 				break;
 		}

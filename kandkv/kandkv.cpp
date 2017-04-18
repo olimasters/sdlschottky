@@ -64,12 +64,12 @@ class Schottky
 {	//TODO: Change this into two classes by making the group theory more self-contained
 	public:
 		
-		Schottky(double k,double v,int pixWidth,int pixHeight);	//Constructor
+		Schottky(double k,double kv,int pixWidth,int pixHeight);	//Constructor
 		void plot(void);	//Plots the current limit set, with Schottky circles, to the screen
 		void setPix(int i,int j,Colour colour);
 		//Setters
 		void setk(double k);
-		void setv(double v);
+		void setkv(double kv);	//kv means k/v
 		void setPixWidth(int pixWidth){this->pixWidth=pixWidth;};
 		void setPixHeight(int pixHeight){this->pixHeight=pixHeight;};
 		void setWidth(int width){this->width=width;};
@@ -86,6 +86,7 @@ class Schottky
 		Circle circ[4];		//Circles of the group
 		
 		double k;		//Parameters of the group, see Indra's Pearls
+		double kv;
 		double v;
 		double u;
 		double x;
@@ -220,19 +221,19 @@ int Schottky::calculate(std::complex<double> z)
 	return threshold;
 }
 
-Schottky::Schottky(double k,double v,int pixWidth,int pixHeight)
+Schottky::Schottky(double k,double kv,int pixWidth,int pixHeight)
 {
 	this->k=k;
 	this->pixWidth = pixWidth;
 	this->pixHeight = pixHeight;
 	cpus = std::thread::hardware_concurrency();
 	pixels = new unsigned int[pixWidth*pixHeight];
-	setv(v);	//Makes sure that updateParams() is called
+	setkv(kv);	//Makes sure that updateParams() is called
 }
 
-void Schottky::setv(double v)
+void Schottky::setkv(double kv)
 {
-	this->v=v;
+	this->kv=kv;
 	updateParams();
 }
 
@@ -244,6 +245,7 @@ void Schottky::setk(double k)
 
 void Schottky::updateParams(void)
 {
+	v = k/kv;
 	u = sqrt(1.0 + v*v);
 	y = 2.0 / (v*(k+1.0/k));
 	x = sqrt(1.0 + y*y);
@@ -341,7 +343,7 @@ int main(int argc,char *argv[])
 				break;
 			case SDL_MOUSEMOTION:
 				params = group.pixToC(event.motion.x,event.motion.y);
-				group.setv(params.imag());
+				group.setkv(params.imag());
 				group.setk(params.real());
 				group.plot();
 				break;
