@@ -1,4 +1,6 @@
 #include <iostream>
+#include <thread>
+#include <vector>
 #include <chrono>
 #include <complex>
 #include <SDL2/SDL.h>
@@ -100,23 +102,16 @@ class Schottky
 		
 		SDL_Renderer *renderer;	//Renderer with which to plot things
 		SDL_Texture *texture;	//Similar to above
+		int cpus;
 		
 		unsigned int *pixels;	//Raw pixel data, encoded in an unsigned int array
 		
 		void updateParams(void);	//Updates all parameters of the group
+		void updatePixStrip(int min,int max);	//Updates the pixels with x value between min and max
 		
 		Colour getColour(int n);			//Takes number of iterations required to reach the fundamental domain, returns corresponding colour
 		int calculate(std::complex<double> z);		//Returns the number of iterations to get z into the fundamental domain
 };
-
-void gaussUnits(void)
-{
-	Colour black;
-	black.a=255;
-	black.r=0;
-	black.g=0;
-	black.b=0;
-}
 
 void Schottky::setPix(int i,int j,Colour colour)
 {
@@ -126,19 +121,40 @@ void Schottky::setPix(int i,int j,Colour colour)
 
 void Schottky::plot(void)
 {
-	Colour colour;
-	for(int i=0;i<pixWidth;i++)
+	std::vector<std::thread> threads;
+	threads.reserve(cpus);
+	
+	//Update a strip of pixels for each logical core the machine has
+	for(int i=0;i<cpus;i++)
+		threads.push_back(std::thread(&Schottky::updatePixStrip,this,i * pixWidth / cpus,(i+1)*pixWidth/cpus));
+	
+	//Wait until they're all finished
+	while(!threads.empty())
 	{
-		for(int j=0;j<pixHeight;j++)
+		threads.back().join();
+		threads.pop_back();
+	}
+	
+	//Now we just copy over the pixel information to the screen
+	
+	SDL_UpdateTexture(texture,NULL,pixels,pixWidth*sizeof(pixels[0])); //TODO: Apparently this is a fairly slow function with faster alternatives
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer,texture,NULL,NULL);
+	SDL_RenderPresent(renderer);
+}
+
+void Schottky::updatePixStrip(int min,int max)
+{
+	Colour colour;
+	for(int i=min;i<max;i++)
+	{
+		for(int j=0;j<pixWidth;j++)
 		{
 			colour = getColour(calculate(pixToC(i,j)));
 			setPix(i,j,colour);
 		}
 	}
-	SDL_UpdateTexture(texture,NULL,pixels,pixWidth*sizeof(pixels[0])); //TODO: Apparently this is a fairly slow function with faster alternatives
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer,texture,NULL,NULL);
-	SDL_RenderPresent(renderer);
+			
 }
 
 Colour Schottky::getColour(int n)
@@ -211,6 +227,7 @@ Schottky::Schottky(double k,double v,int pixWidth,int pixHeight)
 	this->k=k;
 	this->pixWidth = pixWidth;
 	this->pixHeight = pixHeight;
+	cpus = std::thread::hardware_concurrency();
 	pixels = new unsigned int[pixWidth*pixHeight];
 	setv(v);	//Makes sure that updateParams() is called
 }
