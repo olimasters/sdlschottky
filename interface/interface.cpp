@@ -105,7 +105,7 @@ class Schottky
 		unsigned int *pixels;	//Raw pixel data, encoded in an unsigned int array
 		
 		void updateParams(void);	//Updates all parameters of the group
-		void updatePixStrip(int min,int max);	//Updates the pixels with x value between min and max
+		void updatePixStrip(int min,int max);	//Updates the pixels with x coordinate in [min,max)
 		
 		Colour getColour(int n);			//Takes number of iterations required to reach the fundamental domain, returns corresponding colour
 		int calculate(std::complex<double> z);		//Returns the number of iterations to get z into the fundamental domain
@@ -158,7 +158,7 @@ void Schottky::updatePixStrip(int min,int max)
 }
 
 Colour Schottky::getColour(int n)
-{
+{	//TODO: make this independent of threshold
 	Colour pixColour;
 	pixColour.a = 255;	//Full opacity for all colours (for now)
 	if(n == threshold)	//We were sufficiently close enough to the limit set
@@ -340,6 +340,7 @@ int main(int argc,char *argv[])
 			if(event.type == SDL_QUIT)
 				break;
 		
+		//Handle the event, be it a quit or the back of the queue
 		switch(event.type)
 		{
 			case SDL_QUIT:
