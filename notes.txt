@@ -46,3 +46,16 @@ Understand what is the family of groups
 Make a separate parameter window, put the dot on it etc
 
 Does the tangency point determine everything?  Consider using the centres of circles as parameters too
+
+
+__________________________________________________________________________________
+
+UI challenge: different parameter window
+		zoom - how much to increase the threshold by?
+Mathematical challenge: different family of groups
+Efficiency challenge: make the pixel algorithm fly
+Reading exercise: re-read some chapter 10 stuff
+Maintenance exercise: sort the colours out
+	Perhaps keep track of the previous word or even matrix
+	Cumulative products of matrices: (the quest for blinding speed)
+		Keep track of the word, the matrix, etc
